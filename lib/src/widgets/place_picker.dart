@@ -3,11 +3,9 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-
 import 'package:place_picker_google/place_picker_google.dart';
 import 'package:place_picker_google/src/entities/google/index.dart';
 import 'package:place_picker_google/src/services/index.dart';
@@ -181,6 +179,10 @@ class PlacePicker extends StatefulWidget {
   /// True if the map should show a toolbar when you interact with the map. Android only.
   final bool mapToolbarEnabled;
 
+  // a function to provide search text suggestion
+  final Function(String placeDescription, String placeId)?
+      selectedSearchSuggestionText;
+
   const PlacePicker({
     super.key,
     required this.apiKey,
@@ -197,6 +199,7 @@ class PlacePicker extends StatefulWidget {
     this.searchInputConfig = const SearchInputConfig(),
     this.searchInputDecorationConfig = const SearchInputDecorationConfig(),
     this.enableNearbyPlaces = true,
+    this.selectedSearchSuggestionText,
     this.nearbyPlaceItemStyle,
     this.nearbyPlaceStyle,
     this.selectedLocationNameStyle,
@@ -754,7 +757,8 @@ class PlacePickerState extends State<PlacePicker>
         autoCompleteItem: aci,
         onTap: () {
           FocusScope.of(context).requestFocus(FocusNode());
-          decodeAndSelectPlace(aci.id!);
+          widget.selectedSearchSuggestionText?.call(aci.text!, aci.id!);
+          decodeAndSelectPlace(aci.id!, aci.text!);
         },
       );
     }).toList();
@@ -795,7 +799,7 @@ class PlacePickerState extends State<PlacePicker>
   /// To navigate to the selected place from the autocomplete list to the map,
   /// the lat,lng is required. This method fetches the lat,lng of the place and
   /// proceeds to moving the map to that location.
-  void decodeAndSelectPlace(String placeId) async {
+  void decodeAndSelectPlace(String placeId, String placeText) async {
     _clearOverlay();
 
     try {
