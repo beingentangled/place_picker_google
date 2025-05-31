@@ -3,11 +3,9 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-
 import 'package:place_picker_google/place_picker_google.dart';
 import 'package:place_picker_google/src/entities/google/index.dart';
 import 'package:place_picker_google/src/services/index.dart';
@@ -90,6 +88,8 @@ class PlacePicker extends StatefulWidget {
 
   /// Builder method for selected place widget
   final SelectedPlaceWidgetBuilder? selectedPlaceWidgetBuilder;
+  final Function(String placeDescription, String placeId)
+      selectedSearchSuggestionText;
 
   /// True if a "My Location" layer should be shown on the map.
   ///
@@ -221,6 +221,7 @@ class PlacePicker extends StatefulWidget {
     this.myLocationButtonEnabled = false,
     this.compassEnabled = true,
     this.mapToolbarEnabled = true,
+    required this.selectedSearchSuggestionText,
   });
 
   @override
@@ -755,6 +756,10 @@ class PlacePickerState extends State<PlacePicker>
         onTap: () {
           FocusScope.of(context).requestFocus(FocusNode());
           decodeAndSelectPlace(aci.id!);
+          widget.selectedSearchSuggestionText(
+            aci.text!,
+            aci.id!,
+          );
         },
       );
     }).toList();

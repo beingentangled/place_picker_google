@@ -1,17 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_config/flutter_config.dart';
-import 'package:place_picker_google/place_picker_google.dart';
-
+// import 'package:flutter_config/flutter_config.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
-import 'dart:io' show Platform;
+import 'package:place_picker_google/place_picker_google.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb) {
-    await FlutterConfig.loadEnvVariables();
+    // await FlutterConfig.loadEnvVariables();
   }
 
   runApp(
@@ -70,11 +67,7 @@ class _GooglePlacePickerExampleState extends State<GooglePlacePickerExample> {
                 ? 'https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/'
                 : "https://maps.googleapis.com/maps/api/",
             usePinPointingSearch: true,
-            apiKey: kIsWeb
-                ? "GOOGLE_MAPS_API_KEY_WEB"
-                : Platform.isAndroid
-                    ? FlutterConfig.get('GOOGLE_MAPS_API_KEY_ANDROID')
-                    : FlutterConfig.get('GOOGLE_MAPS_API_KEY_IOS'),
+            apiKey: "",
             onPlacePicked: (LocationResult result) {
               debugPrint("Place picked: ${result.formattedAddress}");
               Navigator.of(context).pop();
@@ -102,7 +95,11 @@ class _GooglePlacePickerExampleState extends State<GooglePlacePickerExample> {
               hintText: "Search for a building, street or ...",
             ),
             // selectedPlaceWidgetBuilder: (ctx, state, result) {
-            //   return const SizedBox.shrink();
+            //   return const S,
+            selectedSearchSuggestionText:
+                (String placeDescription, String placeId) {
+              return placeDescription;
+            },
             // },
             autocompletePlacesSearchRadius: 150,
           );
