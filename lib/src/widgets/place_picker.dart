@@ -339,12 +339,8 @@ class PlacePickerState extends State<PlacePicker>
         });
       }
     } catch (e) {
-      if (e is LocationServiceDisabledException && mounted) {
+      if (mounted) {
         Navigator.of(context).pop();
-      } else {
-        setState(() {
-          _canLoadMap = true;
-        });
       }
       debugPrint(e.toString());
     }
@@ -1281,15 +1277,15 @@ class PlacePickerState extends State<PlacePicker>
                   "To use location, go to your Settings App > Privacy > Location Services."),
               actions: [
                 CupertinoDialogAction(
-                  child: const Text("Cancel"),
+                  child: const Text("Cancel",style: TextStyle(color: Colors.orange)),
                   onPressed: () {
-                    Navigator.of(context).pop(false);
+                    Navigator.of(ctx).pop(false);
                   },
                 ),
                 CupertinoDialogAction(
-                  child: const Text("Ok"),
+                  child: const Text("Ok",style: TextStyle(color: Colors.orange)),
                   onPressed: () {
-                    Navigator.of(context).pop(true);
+                    Navigator.of(ctx).pop(true);
                   },
                 )
               ],
@@ -1305,16 +1301,16 @@ class PlacePickerState extends State<PlacePicker>
                 "The app needs to access your location. Please enable location service."),
             actions: [
               TextButton(
-                child: const Text("Cancel"),
+                child:  Text("Cancel",style: TextStyle(color: Colors.orange),),
                 onPressed: () async {
-                  Navigator.of(context).pop(false);
+                  Navigator.of(ctx).pop(false);
                 },
               ),
               TextButton(
-                child: const Text("OK"),
+                child: const Text("OK",style: TextStyle(color: Colors.orange)),
                 onPressed: () async {
                   await Geolocator.openLocationSettings().then((value) {
-                    if (mounted) Navigator.of(context).pop(true);
+                    if (mounted) Navigator.of(ctx).pop(true);
                   });
                 },
               ),
