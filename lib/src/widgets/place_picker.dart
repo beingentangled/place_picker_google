@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -21,6 +23,53 @@ typedef PinWidgetBuilder = Widget Function(
   BuildContext context,
   PinState state,
 );
+
+typedef PlacePickerLayoutBuilder = Widget Function(
+  BuildContext context,
+  PlacePickerLayout layout,
+);
+
+/// The parts of a [PlacePicker] handed to [PlacePicker.layoutBuilder], so an
+/// app can lay the screen out itself while the picker keeps its search,
+/// geocoding and location logic.
+class PlacePickerLayout {
+  const PlacePickerLayout({
+    required this.map,
+    required this.isMapReady,
+    required this.searchLink,
+    required this.searchKey,
+    required this.onSearch,
+    required this.locateMe,
+    required this.moveTo,
+    required this.selectedPlace,
+    required this.searchingState,
+  });
+
+  /// The map with the pin-pointing pin (or a loading indicator); give it a
+  /// bounded size. Map drags win over an enclosing scroll view.
+  final Widget map;
+
+  /// False until the first position is known.
+  final bool isMapReady;
+
+  /// Wrap the search field in `CompositedTransformTarget(link: searchLink)`
+  /// with `key: searchKey`; suggestions open below it.
+  final LayerLink searchLink;
+  final GlobalKey searchKey;
+
+  /// Call with the field's text to search places (autocomplete).
+  final ValueChanged<String> onSearch;
+
+  /// Centres the map on the device location, asking for permission first.
+  final VoidCallback locateMe;
+
+  /// Centres the map on [LatLng] and geocodes it.
+  final ValueChanged<LatLng> moveTo;
+
+  /// The geocoded place under the pin, once known.
+  final LocationResult? selectedPlace;
+  final SearchingState searchingState;
+}
 
 /// Google place picker widget made with map widget from
 /// [google_maps_flutter](https://github.com/flutter/plugins/tree/master/packages/google_maps_flutter)
@@ -88,6 +137,11 @@ class PlacePicker extends StatefulWidget {
 
   /// Builder method for selected place widget
   final SelectedPlaceWidgetBuilder? selectedPlaceWidgetBuilder;
+
+  /// Replaces the default full-screen layout (map with the search box and
+  /// location button over it, place card below) with the app's own; see
+  /// [PlacePickerLayout]. Without it the picker looks as before.
+  final PlacePickerLayoutBuilder? layoutBuilder;
   final Function(String placeDescription, String placeId)
       selectedSearchSuggestionText;
 
@@ -202,6 +256,7 @@ class PlacePicker extends StatefulWidget {
     this.selectedLocationNameStyle,
     this.selectedFormattedAddressStyle,
     this.selectedPlaceWidgetBuilder,
+    this.layoutBuilder,
     this.selectedActionButtonChild,
     this.selectedPlaceConfig = const SelectedPlaceConfig.init(),
     this.myLocationFABConfig = const MyLocationFABConfig(),
@@ -352,6 +407,34 @@ class PlacePickerState extends State<PlacePicker>
 
   @override
   Widget build(BuildContext context) {
+    final layoutBuilder = widget.layoutBuilder;
+    if (layoutBuilder != null) {
+      return layoutBuilder(
+        context,
+        PlacePickerLayout(
+          map: _canLoadMap
+              ? Stack(
+                  children: [
+                    _buildGoogleMap(),
+                    if (widget.usePinPointingSearch)
+                      _buildPinPointingIndicator(),
+                  ],
+                )
+              : _buildLoadingIndicator(),
+          isMapReady: _canLoadMap,
+          searchLink: _layerLink,
+          searchKey: searchInputKey,
+          onSearch: searchPlace,
+          locateMe: _locateMe,
+          moveTo: (latLng) {
+            _clearOverlay();
+            animateToLocation(latLng);
+          },
+          selectedPlace: _geocodingResult,
+          searchingState: _searchingState,
+        ),
+      );
+    }
     return Material(
       child: Column(
         children: <Widget>[
@@ -403,6 +486,14 @@ class PlacePickerState extends State<PlacePicker>
       myLocationButtonEnabled: widget.myLocationButtonEnabled,
       compassEnabled: widget.compassEnabled,
       mapToolbarEnabled: widget.mapToolbarEnabled,
+      // In an app layout the map sits in a scroll view; let it keep drags.
+      gestureRecognizers: widget.layoutBuilder == null
+          ? const <Factory<OneSequenceGestureRecognizer>>{}
+          : <Factory<OneSequenceGestureRecognizer>>{
+              Factory<OneSequenceGestureRecognizer>(
+                EagerGestureRecognizer.new,
+              ),
+            },
     );
   }
 
